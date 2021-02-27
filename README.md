@@ -3,6 +3,7 @@
 ## Heavily modified by Samuel Duclos in 2 hours.
 
 #### Emulate on an x86_64 before trying out on ARM64:
+```bash
 $ DOCKER_URL=''
 $ DOCKER_USER='arm64v8'
 $ DOCKER_USER="${DOCKER_URL}${DOCKER_USER}"
@@ -19,6 +20,7 @@ $ exit
 $ docker build -f Dockerfile.ros.kinetic -t jetson/ros:kinetic .
 $ ./launch_container.sh
 $ roscore
+```
 
 ###############################################################################
 

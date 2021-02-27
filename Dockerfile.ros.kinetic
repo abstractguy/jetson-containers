@@ -28,6 +28,7 @@ WORKDIR /workspace
 # Add new sudo user.
 ENV USERNAME kinetic
 ENV HOME /home/$USERNAME
+# Replace 1000 with your user/group id.
 RUN useradd -m $USERNAME && \
     echo "$USERNAME:$USERNAME" | chpasswd && \
     usermod --shell /bin/bash $USERNAME && \
@@ -35,7 +36,6 @@ RUN useradd -m $USERNAME && \
     mkdir /etc/sudoers.d && \
     echo "$USERNAME ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/$USERNAME && \
     chmod 0440 /etc/sudoers.d/$USERNAME && \
-    # Replace 1000 with your user/group id.
     usermod  --uid 1000 $USERNAME && \
     groupmod --gid 1000 $USERNAME && \
     gpasswd -a $USERNAME video
@@ -141,54 +141,54 @@ RUN echo "export LD_LIBRARY_PATH=/usr/lib/aarch64-linux-gnu/tegra:/usr/lib/aarch
 
 #RUN su - ros -c "touch mine"
 
-#ENV USER ros
-#USER ros
+#ENV USER ${USERNAME}
+#USER ${USERNAME}
 #ENV HOME /home/${USER}
 
 RUN /bin/bash -c 'echo "source /opt/ros/kinetic/setup.bash" >> ~/.bashrc && \
                   source /opt/ros/kinetic/setup.bash'
 
-RUN sudo /bin/sh -c "apt-get update && \
-                     apt-get install -y libbluetooth-dev \
-                                        libcwiid-dev \
-                                        libqt4-dev \
-                                        libftdi-dev \
-                                        libignition-math2-dev \
-                                        libspnav-dev \
-                                        libusb-dev \
-                                        pyqt4-dev-tools \
-                                        python-pip \
-                                        python-skimage \
-                                        python-rosdep \
-                                        python-rosinstall \
-                                        python-rosinstall-generator \
-                                        python-wstool \
-                                        python3-defusedxml \
-                                        python3-pip \
-                                        python3-pyqt4 \
-                                        python3-skimage \
-                                        python3-vcstool \
-                                        pyqt4-dev-tools \
-                                        pyqt5-dev-tools \
-                                        qt4-qmake \
-                                        ros-kinetic-ar-track-alvar-msgs \
-                                        ros-kinetic-control-msgs \
-                                        ros-kinetic-control-toolbox \
-                                        ros-kinetic-eigen-conversions \
-                                        ros-kinetic-geodesy \
-                                        ros-kinetic-joy \
-                                        ros-kinetic-kdl-conversions \
-                                        ros-kinetic-navigation \
-                                        ros-kinetic-nodelet \
-                                        ros-kinetic-octomap-msgs \
-                                        ros-kinetic-octomap-ros \
-                                        ros-kinetic-pcl-ros \
-                                        ros-kinetic-pluginlib \
-                                        ros-kinetic-rviz \
-                                        ros-kinetic-std-srvs \
-                                        ros-kinetic-tf2-sensor-msgs \
-                                        ros-kinetic-trajectory-msgs \
-                                        ros-kinetic-urdf && \
+RUN /bin/sh -c "apt-get update && \
+                apt-get install -y libbluetooth-dev \
+                                   libcwiid-dev \
+                                   libqt4-dev \
+                                   libftdi-dev \
+                                   libignition-math2-dev \
+                                   libspnav-dev \
+                                   libusb-dev \
+                                   pyqt4-dev-tools \
+                                   python-pip \
+                                   python-skimage \
+                                   python-rosdep \
+                                   python-rosinstall \
+                                   python-rosinstall-generator \
+                                   python-wstool \
+                                   python3-defusedxml \
+                                   python3-pip \
+                                   python3-pyqt4 \
+                                   python3-skimage \
+                                   python3-vcstool \
+                                   pyqt4-dev-tools \
+                                   pyqt5-dev-tools \
+                                   qt4-qmake \
+                                   ros-kinetic-ar-track-alvar-msgs \
+                                   ros-kinetic-control-msgs \
+                                   ros-kinetic-control-toolbox \
+                                   ros-kinetic-eigen-conversions \
+                                   ros-kinetic-geodesy \
+                                   ros-kinetic-joy \
+                                   ros-kinetic-kdl-conversions \
+                                   ros-kinetic-navigation \
+                                   ros-kinetic-nodelet \
+                                   ros-kinetic-octomap-msgs \
+                                   ros-kinetic-octomap-ros \
+                                   ros-kinetic-pcl-ros \
+                                   ros-kinetic-pluginlib \
+                                   ros-kinetic-rviz \
+                                   ros-kinetic-std-srvs \
+                                   ros-kinetic-tf2-sensor-msgs \
+                                   ros-kinetic-trajectory-msgs \
+                                   ros-kinetic-urdf && \
                      apt-get clean && \
                      rm -rf /var/lib/apt/lists/*"
 
@@ -204,38 +204,38 @@ RUN sudo /bin/sh -c "apt-get update && \
 #    apt-get clean && \
 #    rm -rf /var/lib/apt/lists/*
 
-RUN sudo -H /bin/bash -c "yes | pip install --upgrade pip==19.3.1 && \
-                          yes | pip install gym \
-                                            h5py \
-                                            keras \
-                                            pyuarm \
-                                            pyyaml \
-                                            pyserial \
-                                            rospkg \
-                                            catkin_pkg \
-                                            defusedxml \
-                                            netifaces \
-                                            numpy==1.16.2 \
-                                            matplotlib==2.2.3 \
-                                            protobuf==3.5.2 \
-                                            scikit-image==0.14.2 \
-                                            tensorflow-gpu \
-                                    --user && \
+RUN /bin/bash -c "yes | pip install --upgrade pip==19.3.1 && \
+                  yes | pip install gym \
+                                    h5py \
+                                    keras \
+                                    pyuarm \
+                                    pyyaml \
+                                    pyserial \
+                                    rospkg \
+                                    catkin_pkg \
+                                    defusedxml \
+                                    netifaces \
+                                    numpy==1.16.2 \
+                                    matplotlib==2.2.3 \
+                                    protobuf==3.5.2 \
+                                    scikit-image==0.14.2 \
+                                    tensorflow-gpu \
+                            --user && \
     pip cache purge"
 
 # Install Gazebo 7 .
 #RUN curl -sSL http://get.gazebosim.org | sh
-RUN sudo sh -c 'echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable $(lsb_release -cs) main" > /etc/apt/sources.list.d/gazebo-stable.list'
-RUN wget http://packages.osrfoundation.org/gazebo.key -O - | sudo apt-key add -
-RUN sudo sh -c "apt-get update && \
-                apt-get install -y gazebo7 \
-                                   ros-kinetic-gazebo-ros-pkgs \
-                                   ros-kinetic-gazebo-ros-control && \
-                                   #ros-kinetic-ur-gazebo \
-                                   #ros-kinetic-ur5-moveit-config \
-                                   #ros-kinetic-ur-kinematics \
-                                   #moveit_simple_controller_manager \
-                rm -rf /var/lib/apt/lists/*"
+RUN sh -c 'echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable $(lsb_release -cs) main" > /etc/apt/sources.list.d/gazebo-stable.list'
+RUN wget http://packages.osrfoundation.org/gazebo.key -O - | apt-key add -
+RUN sh -c "apt-get update && \
+           apt-get install -y gazebo7 \
+                              ros-kinetic-gazebo-ros-pkgs \
+                              ros-kinetic-gazebo-ros-control && \
+                              #ros-kinetic-ur-gazebo \
+                              #ros-kinetic-ur5-moveit-config \
+                              #ros-kinetic-ur-kinematics \
+                              #moveit_simple_controller_manager \
+           rm -rf /var/lib/apt/lists/*"
 
 ENV NAME='catkin_ws'
 RUN mkdir -p ${HOME}/${NAME}/src
@@ -257,12 +257,12 @@ RUN /bin/bash -c "cd ${HOME}/${NAME}/src && \
 RUN /bin/bash -c "cd ${HOME}/${NAME}; source /opt/ros/${ROS_DISTRO}/setup.bash; catkin_make"
 
 # Init/update rosdep.
-RUN sudo -H /bin/bash -c "apt-get update && \
-                          cd ${ROS_ROOT} && \
-                          rosdep init && \
-                          rosdep update && \
-                          apt-get clean && \
-                          rm -rf /var/lib/apt/lists/*"
+RUN /bin/bash -c "apt-get update && \
+                  cd ${ROS_ROOT} && \
+                  rosdep init && \
+                  rosdep update && \
+                  apt-get clean && \
+                  rm -rf /var/lib/apt/lists/*"
 
 # Set missing environment variable needed to run Qt applications.
 ENV QT_X11_NO_MITSHM 1
@@ -271,16 +271,17 @@ ENV QT_X11_NO_MITSHM 1
 #RUN source ${HOME}/${NAME}/devel/setup.bash
 
 COPY config/update_bashrc /sbin/update_bashrc
-RUN sudo chmod +x /sbin/update_bashrc; sudo chown ros /sbin/update_bashrc; sync; /bin/bash -c /sbin/update_bashrc; sudo rm /sbin/update_bashrc
+RUN chmod +x /sbin/update_bashrc; chown ros /sbin/update_bashrc; sync; /bin/bash -c /sbin/update_bashrc; rm /sbin/update_bashrc
 
 # setup entrypoint
 #COPY config/entrypoint.sh /ros_entrypoint.sh
 COPY ./packages/ros_entrypoint.sh /ros_entrypoint.sh
 
-RUN sudo chmod +x /ros_entrypoint.sh; sudo chown ros /ros_entrypoint.sh
+RUN chmod +x /ros_entrypoint.sh; chown ros /ros_entrypoint.sh
 RUN echo 'source ${ROS_ROOT}/setup.bash' >> /root/.bashrc
 ENTRYPOINT ["/ros_entrypoint.sh"]
 #CMD ["bash"]
 #CMD ["source devel/setup.bash && /bin/bash"]
 CMD ["su", "-", "ros", "-c", "source devel/setup.bash && /bin/bash"]
 WORKDIR /
+
