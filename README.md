@@ -1,5 +1,27 @@
 # Machine Learning Containers for Jetson and JetPack
 
+## Heavily modified by Samuel Duclos in 2 hours.
+
+#### Emulate on an x86_64 before trying out on ARM64:
+$ DOCKER_URL=''
+$ DOCKER_USER='arm64v8'
+$ DOCKER_USER="${DOCKER_URL}${DOCKER_USER}"
+$ DOCKER_IMAGE='ubuntu'
+$ DOCKER_TAG='16.04'
+
+$ uname -m
+$ sudo apt-get install qemu binfmt-support qemu-user-static
+$ docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+$ docker pull ${DOCKER_USER}/${DOCKER_IMAGE}:${DOCKER_TAG}
+$ docker run -it --rm --privileged --network=host --runtime nvidia -e DISPLAY=$DISPLAY -v /tmp/.X11-unix/:/tmp/.X11-unix -v $(pwd):/app ${DOCKER_USER}/${DOCKER_IMAGE}:${DOCKER_TAG} uname -m
+$ exit
+
+$ docker build -f Dockerfile.ros.kinetic -t jetson/ros:kinetic .
+$ ./launch_container.sh
+$ roscore
+
+###############################################################################
+
 Hosted on [NVIDIA GPU Cloud](https://ngc.nvidia.com/catalog/containers?orderBy=modifiedDESC&query=L4T&quickFilter=containers&filters=) (NGC) are the following Docker container images for machine learning on Jetson:
 
 * [`l4t-ml`](https://ngc.nvidia.com/catalog/containers/nvidia:l4t-ml)

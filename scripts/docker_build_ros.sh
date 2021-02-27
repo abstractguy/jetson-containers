@@ -4,7 +4,7 @@ set -e
 
 BASE_IMAGE="nvcr.io/nvidia/l4t-base"
 L4T_VERSION="r32.4.4"
-SUPPORTED_ROS_DISTROS=("melodic" "noetic" "eloquent" "foxy")
+SUPPORTED_ROS_DISTROS=("melodic" "kinetic" "noetic" "eloquent" "foxy")
 ROS_DISTRO=${1:-"all"}
 
 echo "building containers for $ROS_DISTRO..."

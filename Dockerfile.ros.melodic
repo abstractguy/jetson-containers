@@ -1,7 +1,6 @@
-#
-# this dockerfile roughly follows the 'Ubuntu install of ROS Melodic' from:
+# This dockerfile roughly follows the 'Ubuntu install of ROS Melodic' from:
 #   http://wiki.ros.org/melodic/Installation/Ubuntu
-#
+
 ARG BASE_IMAGE=nvcr.io/nvidia/l4t-base:r32.4.4
 FROM ${BASE_IMAGE}
 
@@ -15,15 +14,16 @@ WORKDIR /workspace
 
 # add the ROS deb repo to the apt sources list
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-          git \
-		cmake \
-		build-essential \
-		curl \
-		wget \
-		gnupg2 \
-		lsb-release \
-    && rm -rf /var/lib/apt/lists/*
+    apt-get install -y --no-install-recommends bash-completion \
+                                               build-essential \
+                                               cmake \
+                                               curl \
+                                               git \
+                                               gnupg2 \
+                                               lsb-release \
+                                               sudo \
+                                               wget && \
+    rm -rf /var/lib/apt/lists/*
 
 RUN sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
 RUN apt-key adv --keyserver 'hkp://keyserver.ubuntu.com:80' --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
