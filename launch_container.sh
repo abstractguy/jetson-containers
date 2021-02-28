@@ -9,7 +9,11 @@ XAUTH=/tmp/.docker.xauth
 touch $XAUTH
 xauth nlist $DISPLAY | sed -e 's/^..../ffff/' | xauth -f $XAUTH nmerge -
 
-docker run --runtime=nvidia --rm -it \
+xhost +local:root
+sudo xhost +si:localuser:root
+
+docker run --privileged \
+           --runtime=nvidia --rm -it \
            --volume=$XSOCK:$XSOCK:rw \
            --volume=$XAUTH:$XAUTH:rw \
            --volume=$HOME:$HOME \
@@ -22,3 +26,8 @@ docker run --runtime=nvidia --rm -it \
            --env=QT_X11_NO_MITSHM=1 \
            --net=host \
            jetson/ros:kinetic
+
+
+
+
+

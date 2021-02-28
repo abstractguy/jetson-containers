@@ -20,7 +20,7 @@ $ exit
 $ docker build -f Dockerfile.ros.kinetic -t jetson/ros:kinetic .
 $ sudo chmod +x launch_container.sh
 $ ./launch_container.sh
-$ roscore
+$ roscore &
 ```
 
 ###############################################################################

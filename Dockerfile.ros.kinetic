@@ -1,331 +1,70 @@
-# This dockerfile roughly follows the 'Ubuntu install of ROS Kinetic' from:
-#   http://wiki.ros.org/kinetic/Installation/Ubuntu
+# File:          yolo_inference/Dockerfile
+# By:            Samuel Duclos
+# For            Myself
+# Description:   This Dockerfile installs UArmForROS.
+# Build usage:   cd ${HOME}/school/Projets/Final/jetson-containers && sudo -H nvidia-docker build -t uarm -f Dockerfile .
+# Run usage:     cd ${HOME}/school/Projets/Final/jetson-containers && xhost + && sudo docker run -it --rm --runtime nvidia --network host -e DISPLAY=$DISPLAY -v /tmp/.X11-unix/:/tmp/.X11-unix -v $(pwd):/app uarm
+# Notes:         Make sure you have nvidia-runtime enabled in docker config.
 
-#sudo docker system prune -a --volumes
-#sudo bash build.sh kinetic-perception
+FROM arm64v8/ubuntu:16.04
 
-#ARG BASE_IMAGE=ros:kinetic-robot-xenial
-#ARG BASE_IMAGE=nvcr.io/nvidia/l4t-base:r32.4.4
-ARG BASE_IMAGE=arm64v8/ubuntu:16.04
-FROM ${BASE_IMAGE}
+RUN echo "Building UArm Docker image with ${WHEEL_FILE}..."
 
-ENV NVIDIA_VISIBLE_DEVICES ${NVIDIA_VISIBLE_DEVICES:-all}
-ENV NVIDIA_DRIVER_CAPABILITIES ${NVIDIA_DRIVER_CAPABILITIES:+$NVIDIA_DRIVER_CAPABILITIES,}graphics
-
-#ARG NAME=ros_ws
-ARG NAME=catkin_ws
-ARG ROS_PKG=ros_base
-ENV ROS_DISTRO=kinetic
-ENV ROS_ROOT=/opt/ros/${ROS_DISTRO}
-
-#ARG UID=1000
-#ARG GID=1000
-
+# Ensure apt-get won't prompt for selecting options
 ENV DEBIAN_FRONTEND=noninteractive
 
-WORKDIR /workspace
+# Set missing environment variable needed to run Qt applications.
+ENV QT_X11_NO_MITSHM 1
+
+RUN apt update && \
+    apt install -y --no-install-recommends bash-completion \
+                                           build-essential \
+                                           cmake \
+                                           libgstreamer1.0-dev \
+                                           libgstreamer-plugins-base1.0-dev \
+                                           libjpeg8-dev \
+                                           libopenblas-dev \
+                                           libpython-dev \
+                                           python-pip \
+                                           python-dev \
+                                           software-properties-common \
+                                           sudo \
+                                           zip \
+                                           zlib1g-dev && \
+    pip install --upgrade pip && \
+    pip install setuptools Cython wheel && \
+    pip cache purge && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN chmod +x install_uarm.sh && \
+    bash install_uarm.sh
 
 # Add new sudo user.
-ENV USERNAME kinetic
+ENV USERNAME sam
 ENV HOME /home/$USERNAME
 # Replace 1000 with your user/group id.
 RUN useradd -m $USERNAME && \
     echo "$USERNAME:$USERNAME" | chpasswd && \
     usermod --shell /bin/bash $USERNAME && \
     usermod -aG sudo $USERNAME && \
-    mkdir /etc/sudoers.d && \
+    mkdir -p /etc/sudoers.d && \
     echo "$USERNAME ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/$USERNAME && \
     chmod 0440 /etc/sudoers.d/$USERNAME && \
     usermod  --uid 1000 $USERNAME && \
     groupmod --gid 1000 $USERNAME && \
     gpasswd -a $USERNAME video
 
-# Install packages.
-ENV DEBIAN_FRONTEND noninteractive
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends automake \
-                                               autoconf \
-                                               bash-completion \
-                                               build-essential \
-                                               cmake \
-                                               command-not-found \
-                                               curl \
-                                               dbus \
-                                               emacs \
-                                               freeglut3-dev \
-                                               g++ \
-                                               gcc \
-                                               git \
-                                               gnupg2 \
-                                               less \
-                                               libgles2-mesa-dev \
-                                               libglu1-mesa-dev \
-                                               libtool \
-                                               libx11-dev \
-                                               libxext-dev \
-                                               locales \
-                                               lsb-release \
-                                               mesa-utils \
-                                               pkg-config \
-                                               software-properties-common \
-                                               sudo \
-                                               tmux \
-                                               wget \
-                                               x11proto-gl-dev \
-                                               xdg-user-dirs \
-                                               xsel && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-# Change the locale from POSIX to UTF-8.
-RUN locale-gen en_US en_US.UTF-8 && update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
-ENV LANG=en_US.UTF-8
-
-# Install libglvnd.
-WORKDIR /opt
-RUN git clone -b v1.3.0 https://github.com/NVIDIA/libglvnd.git && \
-    cd libglvnd && \
-    ./autogen.sh && \
-    ./configure --prefix=/usr/local --libdir=/usr/local/lib/aarch64-linux-gnu && \
-    make -j"$(nproc)" install-strip && \
-    echo '/usr/local/lib/aarch64-linux-gnu' >> /etc/ld.so.conf.d/glvnd.conf && \
-    rm /etc/ld.so.conf.d/aarch64-linux-gnu_GL.conf && \
-    rm /etc/ld.so.conf.d/aarch64-linux-gnu_EGL.conf && \
-    ln -s /usr/lib/aarch64-linux-gnu/tegra/ld.so.conf /etc/ld.so.conf.d/aarch64-linux-gnu_GL.conf && \
-    ln -s /usr/lib/aarch64-linux-gnu/tegra-egl/ld.so.conf /etc/ld.so.conf.d/aarch64-linux-gnu_EGL.conf && \
-    ldconfig && \
-    cd /usr/lib/aarch64-linux-gnu && \
-    rm libGL.so && \
-    rm libEGL.so && \
-    rm libGLESv2.so && \
-    ln -s /usr/local/lib/aarch64-linux-gnu/libGL.so libGL.so && \
-    ln -s /usr/local/lib/aarch64-linux-gnu/libGLX.so libGLX.so && \
-    ln -s /usr/local/lib/aarch64-linux-gnu/libEGL.so libEGL.so && \
-    ln -s /usr/local/lib/aarch64-linux-gnu/libGLESv2.so libGLESv2.so && \
-    rm -rf /opt/libglvnd
-
-RUN mkdir -p /usr/local/share/glvnd/egl_vendor.d && \
-    echo '{ "file_format_version" : "1.0.0", "ICD" : { "library_path" : "libEGL_nvidia.so.0" } }' > /usr/local/share/glvnd/egl_vendor.d/10_nvidia.json
-
-# ROS Kinetic
-RUN sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
-RUN apt-key adv --keyserver 'hkp://keyserver.ubuntu.com:80' --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends python-rosdep \
-                                               python-rosinstall \
-                                               python-rosinstall-generator \
-                                               python-wstool \
-                                               ros-kinetic-desktop-full && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-RUN rosdep init
-
 USER $USERNAME
 WORKDIR /home/$USERNAME
-RUN rosdep update
 SHELL ["/bin/bash", "-c"]
 
 USER root
+
+#CMD ["su", "-", "sam", "-c", "/bin/bash"]
+CMD ["bash"]
 WORKDIR /
 
-RUN echo "export LD_LIBRARY_PATH=/usr/lib/aarch64-linux-gnu/tegra:/usr/lib/aarch64-linux-gnu/tegra-egl:$LD_LIBRARY_PATH" >> ~/.bashrc && \
-    echo "export PATH=/usr/local/cuda/bin:$PATH" >> ~/.bashrc && \
-    echo "export LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH" >> ~/.bashrc && \
-    echo "source /opt/ros/kinetic/setup.bash" >> ~/.bashrc && \
-    source ~/.bashrc
-
-#RUN groupadd -g 999 ros && \
-#    useradd -u 999 -g ros -G sudo -m -s /bin/bash ros && \
-#    sed -i /etc/sudoers -re 's/^%sudo.*/%sudo ALL=(ALL:ALL) NOPASSWD: ALL/g' && \
-#    sed -i /etc/sudoers -re 's/^root.*/root ALL=(ALL:ALL) NOPASSWD: ALL/g' && \
-#    sed -i /etc/sudoers -re 's/^#includedir.*/## Removed the include directive ##"/g' && \
-#    echo "ros ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers && \
-#    echo "Customized the sudoers file for passwordless access to the ros user!" && \
-#    echo "ros user:"; su - ros -c id
-
-#RUN su - ros -c "touch mine"
-
-#ENV USER ${USERNAME}
-#USER ${USERNAME}
-#ENV HOME /home/${USER}
-
-RUN /bin/bash -c 'echo "source /opt/ros/kinetic/setup.bash" >> ~/.bashrc && \
-                  source /opt/ros/kinetic/setup.bash'
-
-RUN /bin/sh -c "apt-get update && \
-                apt-get install -y libbluetooth-dev \
-                                   libcwiid-dev \
-                                   libqt4-dev \
-                                   libftdi-dev \
-                                   libignition-math2-dev \
-                                   libspnav-dev \
-                                   libusb-dev \
-                                   pyqt4-dev-tools \
-                                   python-pip \
-                                   python-skimage \
-                                   python-rosdep \
-                                   python-rosinstall \
-                                   python-rosinstall-generator \
-                                   python-wstool \
-                                   python3-defusedxml \
-                                   python3-pip \
-                                   python3-pyqt4 \
-                                   python3-skimage \
-                                   python3-vcstool \
-                                   pyqt4-dev-tools \
-                                   pyqt5-dev-tools \
-                                   qt4-qmake \
-                                   ros-kinetic-ar-track-alvar-msgs \
-                                   ros-kinetic-control-msgs \
-                                   ros-kinetic-control-toolbox \
-                                   ros-kinetic-eigen-conversions \
-                                   ros-kinetic-geodesy \
-                                   ros-kinetic-joy \
-                                   ros-kinetic-kdl-conversions \
-                                   ros-kinetic-navigation \
-                                   ros-kinetic-nodelet \
-                                   ros-kinetic-octomap-msgs \
-                                   ros-kinetic-octomap-ros \
-                                   ros-kinetic-pcl-ros \
-                                   ros-kinetic-pluginlib \
-                                   ros-kinetic-rviz \
-                                   ros-kinetic-std-srvs \
-                                   ros-kinetic-tf2-sensor-msgs \
-                                   ros-kinetic-trajectory-msgs \
-                                   ros-kinetic-urdf && \
-                     apt-get clean && \
-                     rm -rf /var/lib/apt/lists/*"
-
-## install ROS packages
-#RUN apt-get update && \
-#    apt-get install -y --no-install-recommends ros-melodic-ros-base \
-#                                               ros-melodic-image-transport \
-#                                               ros-melodic-vision-msgs \
-#                                               python-rosdep \
-#                                               python-rosinstall \
-#                                               python-rosinstall-generator \
-#                                               python-wstool && \
-#    apt-get clean && \
-#    rm -rf /var/lib/apt/lists/*
-
-#RUN /bin/bash -c "yes | pip install --upgrade pip==19.3.1 && \
-#                  yes | pip install gym \
-#                                    h5py \
-#                                    keras \
-#                                    pyuarm \
-#                                    pyyaml \
-#                                    pyserial \
-#                                    rospkg \
-#                                    catkin_pkg \
-#                                    defusedxml \
-#                                    netifaces \
-#                                    numpy==1.16.2 \
-#                                    matplotlib==2.2.3 \
-#                                    protobuf==3.5.2 \
-#                                    scikit-image==0.14.2 \
-#                                    tensorflow-gpu \
-#                            --user && \
-
-#RUN /bin/bash -c "yes | pip install --upgrade pip==19.3.1 && \
-#                  yes | pip install gym \
-#                                    keras \
-#                                    pyuarm \
-#                                    pyyaml \
-#                                    pyserial \
-#                                    rospkg \
-#                                    catkin_pkg \
-#                                    defusedxml \
-#                                    netifaces \
-#                                    numpy==1.16.2 \
-#                                    matplotlib==2.2.3 \
-#                                    protobuf==3.5.2 \
-#                                    scikit-image==0.14.2 \
-#                            --user && \
-#    pip cache purge"
-
-# Install Gazebo 7 .
-#RUN curl -sSL http://get.gazebosim.org | sh
-RUN sh -c 'echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable $(lsb_release -cs) main" > /etc/apt/sources.list.d/gazebo-stable.list'
-RUN wget http://packages.osrfoundation.org/gazebo.key -O - | apt-key add -
-RUN sh -c "apt-get update && \
-           apt-get install -y gazebo7 \
-                              ros-kinetic-gazebo-ros-pkgs \
-                              ros-kinetic-gazebo-ros-control && \
-                              #ros-kinetic-ur-gazebo \
-                              #ros-kinetic-ur5-moveit-config \
-                              #ros-kinetic-ur-kinematics \
-                              #moveit_simple_controller_manager \
-           rm -rf /var/lib/apt/lists/*"
-
-#USER $USERNAME
-#WORKDIR /home/$USERNAME
-WORKDIR ${HOME}/$USERNAME
-RUN rosdep update
-#SHELL ["/bin/bash", "-c"]
-
-ENV HOME /root
-ENV NAME='catkin_ws'
-RUN mkdir -p ${HOME}/${NAME}/src
-WORKDIR ${HOME}/${NAME}/src
-
-#USER root
-
-RUN /bin/bash -c "source /opt/ros/${ROS_DISTRO}/setup.bash; catkin_init_workspace"
-WORKDIR ${HOME}/${NAME}
-RUN /bin/bash -c "source /opt/ros/${ROS_DISTRO}/setup.bash; catkin_make"
-
-#RUN /bin/bash -c "git clone https://github.com/erlerobot/gym-gazebo && \
-#                  cd gym-gazebo && \
-#                  pip install -e . --user && \
-#                  cd gym_gazebo/envs/installation && \
-#                  bash setup_kinetic.bash"
-
-RUN /bin/bash -c "cd ${HOME}/${NAME}/src && \
-                  git clone https://github.com/abstractguy/UArmForROS.git"
-
-RUN /bin/bash -c "cd ${HOME}/${NAME}; source /opt/ros/${ROS_DISTRO}/setup.bash; catkin_make"
-
-## Init/update rosdep.
-#RUN /bin/bash -c "apt-get update && \
-#                  cd ${ROS_ROOT} && \
-#                  rosdep init && \
-#                  rosdep update && \
-#                  apt-get clean && \
-#                  rm -rf /var/lib/apt/lists/*"
-
-RUN /bin/bash -c "apt-get update && \
-                  apt-get install -y --no-install-depends libglu1 && \
-                  apt-get clean && \
-                  rm -rf /var/lib/apt/lists/*"
-
-# Set missing environment variable needed to run Qt applications.
-ENV QT_X11_NO_MITSHM 1
-
-# Source bash.
-RUN source ${HOME}/${NAME}/devel/setup.bash
-
-COPY config/update_bashrc /sbin/update_bashrc
-RUN chmod +x /sbin/update_bashrc; chown kinetic /sbin/update_bashrc; sync; /bin/bash -c /sbin/update_bashrc; rm /sbin/update_bashrc
-
-# setup entrypoint
-#COPY config/entrypoint.sh /ros_entrypoint.sh
-COPY ./packages/ros_entrypoint.sh /ros_entrypoint.sh
-
-RUN chmod +x /ros_entrypoint.sh; chown kinetic /ros_entrypoint.sh
-
-#USER $USERNAME
-
-RUN echo 'source ${ROS_ROOT}/setup.bash' >> /root/.bashrc
-#RUN echo 'source ${ROS_ROOT}/setup.bash' >> /home/${USERNAME}/.bashrc
-
-#USER root
-
-RUN echo ${HOME}
-RUN echo ${NAME}
-
-WORKDIR ${HOME}/${NAME}
-ENTRYPOINT ["/ros_entrypoint.sh"]
-#CMD ["bash"]
-#CMD ["source devel/setup.bash && /bin/bash"]
-CMD ["su", "-", "kinetic", "-c", "source /opt/ros/kinetic/setup.bash && /bin/bash"]
+# Hack sudo out.
+#alias sudo=
 
