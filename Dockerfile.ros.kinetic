@@ -26,7 +26,6 @@ RUN apt update && \
                                            libopenblas-dev \
                                            libpython-dev \
                                            python-dev \
-                                           python-distutils \
                                            python-pip \
                                            python-setuptools \
                                            software-properties-common \
