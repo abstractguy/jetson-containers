@@ -16,30 +16,38 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Set missing environment variable needed to run Qt applications.
 ENV QT_X11_NO_MITSHM 1
 
+#RUN apt update && \
+#    apt install -y --no-install-recommends bash-completion \
+#                                           build-essential \
+#                                           cmake \
+#                                           libpython-dev \
+#                                           python-dev \
+#                                           python-pip \
+#                                           python-setuptools \
+#                                           python-wheel \
+#                                           software-properties-common \
+#                                           sudo \
+#                                           zip && \
+#    pip install --upgrade pip && \
+#    pip install setuptools Cython wheel && \
+#    pip cache purge && \
+#    apt-get clean && \
+#    rm -rf /var/lib/apt/lists/*
+
 RUN apt update && \
     apt install -y --no-install-recommends bash-completion \
                                            build-essential \
                                            cmake \
-                                           libpython-dev \
-                                           python-dev \
-                                           python-pip \
-                                           python-setuptools \
-                                           python-wheel \
                                            software-properties-common \
-                                           sudo \
-                                           zip && \
-    pip install --upgrade pip && \
-    pip install setuptools Cython wheel && \
-    pip cache purge && \
+                                           sudo && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
-
-RUN chmod +x install_uarm.sh && \
-    bash install_uarm.sh
 
 # Add new sudo user.
 ENV USERNAME sam
 ENV HOME /home/$USERNAME
+COPY install_uarm.sh /
+RUN chmod +x /install_uarm.sh
 # Replace 1000 with your user/group id.
 RUN useradd -m $USERNAME && \
     echo "$USERNAME:$USERNAME" | chpasswd && \
@@ -55,6 +63,9 @@ RUN useradd -m $USERNAME && \
 USER $USERNAME
 WORKDIR /home/$USERNAME
 SHELL ["/bin/bash", "-c"]
+
+RUN alias sudo= && \
+    bash /install_uarm.sh
 
 USER root
 
