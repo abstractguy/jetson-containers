@@ -20,18 +20,14 @@ RUN apt update && \
     apt install -y --no-install-recommends bash-completion \
                                            build-essential \
                                            cmake \
-                                           libgstreamer1.0-dev \
-                                           libgstreamer-plugins-base1.0-dev \
-                                           libjpeg8-dev \
-                                           libopenblas-dev \
                                            libpython-dev \
                                            python-dev \
                                            python-pip \
                                            python-setuptools \
+                                           python-wheel \
                                            software-properties-common \
                                            sudo \
-                                           zip \
-                                           zlib1g-dev && \
+                                           zip && \
     pip install --upgrade pip && \
     pip install setuptools Cython wheel && \
     pip cache purge && \
