@@ -1,6 +1,6 @@
 # Machine Learning Containers for Jetson and JetPack
 
-## Heavily modified by Samuel Duclos in 2 hours.
+## Modified by Samuel Duclos.
 
 #### Emulate on an x86_64 before trying out on ARM64:
 ```bash
@@ -18,6 +18,7 @@ $ docker run -it --rm --privileged --network=host --runtime nvidia -e DISPLAY=$D
 $ exit
 
 $ docker build -f Dockerfile.ros.kinetic -t jetson/ros:kinetic .
+$ sudo chmod +x launch_container.sh
 $ ./launch_container.sh
 $ roscore
 ```

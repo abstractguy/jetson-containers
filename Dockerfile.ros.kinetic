@@ -208,24 +208,40 @@ RUN /bin/sh -c "apt-get update && \
 #    apt-get clean && \
 #    rm -rf /var/lib/apt/lists/*
 
-RUN /bin/bash -c "yes | pip install --upgrade pip==19.3.1 && \
-                  yes | pip install gym \
-                                    h5py \
-                                    keras \
-                                    pyuarm \
-                                    pyyaml \
-                                    pyserial \
-                                    rospkg \
-                                    catkin_pkg \
-                                    defusedxml \
-                                    netifaces \
-                                    numpy==1.16.2 \
-                                    matplotlib==2.2.3 \
-                                    protobuf==3.5.2 \
-                                    scikit-image==0.14.2 \
-                                    tensorflow-gpu \
-                            --user && \
-    pip cache purge"
+#RUN /bin/bash -c "yes | pip install --upgrade pip==19.3.1 && \
+#                  yes | pip install gym \
+#                                    h5py \
+#                                    keras \
+#                                    pyuarm \
+#                                    pyyaml \
+#                                    pyserial \
+#                                    rospkg \
+#                                    catkin_pkg \
+#                                    defusedxml \
+#                                    netifaces \
+#                                    numpy==1.16.2 \
+#                                    matplotlib==2.2.3 \
+#                                    protobuf==3.5.2 \
+#                                    scikit-image==0.14.2 \
+#                                    tensorflow-gpu \
+#                            --user && \
+
+#RUN /bin/bash -c "yes | pip install --upgrade pip==19.3.1 && \
+#                  yes | pip install gym \
+#                                    keras \
+#                                    pyuarm \
+#                                    pyyaml \
+#                                    pyserial \
+#                                    rospkg \
+#                                    catkin_pkg \
+#                                    defusedxml \
+#                                    netifaces \
+#                                    numpy==1.16.2 \
+#                                    matplotlib==2.2.3 \
+#                                    protobuf==3.5.2 \
+#                                    scikit-image==0.14.2 \
+#                            --user && \
+#    pip cache purge"
 
 # Install Gazebo 7 .
 #RUN curl -sSL http://get.gazebosim.org | sh
@@ -241,35 +257,44 @@ RUN sh -c "apt-get update && \
                               #moveit_simple_controller_manager \
            rm -rf /var/lib/apt/lists/*"
 
+#USER $USERNAME
+#WORKDIR /home/$USERNAME
+WORKDIR ${HOME}/$USERNAME
+RUN rosdep update
+#SHELL ["/bin/bash", "-c"]
+
+ENV HOME /root
 ENV NAME='catkin_ws'
 RUN mkdir -p ${HOME}/${NAME}/src
 WORKDIR ${HOME}/${NAME}/src
+
+#USER root
 
 RUN /bin/bash -c "source /opt/ros/${ROS_DISTRO}/setup.bash; catkin_init_workspace"
 WORKDIR ${HOME}/${NAME}
 RUN /bin/bash -c "source /opt/ros/${ROS_DISTRO}/setup.bash; catkin_make"
 
-RUN /bin/bash -c "git clone https://github.com/erlerobot/gym-gazebo && \
-                  cd gym-gazebo && \
-                  pip install -e . --user && \
-                  cd gym_gazebo/envs/installation && \
-                  bash setup_kinetic.bash"
+#RUN /bin/bash -c "git clone https://github.com/erlerobot/gym-gazebo && \
+#                  cd gym-gazebo && \
+#                  pip install -e . --user && \
+#                  cd gym_gazebo/envs/installation && \
+#                  bash setup_kinetic.bash"
 
 RUN /bin/bash -c "cd ${HOME}/${NAME}/src && \
                   git clone https://github.com/abstractguy/UArmForROS.git"
 
-USER $USERNAME
-WORKDIR /home/$USERNAME
-RUN rosdep update
-SHELL ["/bin/bash", "-c"]
-
 RUN /bin/bash -c "cd ${HOME}/${NAME}; source /opt/ros/${ROS_DISTRO}/setup.bash; catkin_make"
 
-# Init/update rosdep.
+## Init/update rosdep.
+#RUN /bin/bash -c "apt-get update && \
+#                  cd ${ROS_ROOT} && \
+#                  rosdep init && \
+#                  rosdep update && \
+#                  apt-get clean && \
+#                  rm -rf /var/lib/apt/lists/*"
+
 RUN /bin/bash -c "apt-get update && \
-                  cd ${ROS_ROOT} && \
-                  rosdep init && \
-                  rosdep update && \
+                  apt-get install -y --no-install-depends libglu1 && \
                   apt-get clean && \
                   rm -rf /var/lib/apt/lists/*"
 
@@ -277,20 +302,30 @@ RUN /bin/bash -c "apt-get update && \
 ENV QT_X11_NO_MITSHM 1
 
 # Source bash.
-#RUN source ${HOME}/${NAME}/devel/setup.bash
+RUN source ${HOME}/${NAME}/devel/setup.bash
 
 COPY config/update_bashrc /sbin/update_bashrc
-RUN chmod +x /sbin/update_bashrc; chown ros /sbin/update_bashrc; sync; /bin/bash -c /sbin/update_bashrc; rm /sbin/update_bashrc
+RUN chmod +x /sbin/update_bashrc; chown kinetic /sbin/update_bashrc; sync; /bin/bash -c /sbin/update_bashrc; rm /sbin/update_bashrc
 
 # setup entrypoint
 #COPY config/entrypoint.sh /ros_entrypoint.sh
 COPY ./packages/ros_entrypoint.sh /ros_entrypoint.sh
 
-RUN chmod +x /ros_entrypoint.sh; chown ros /ros_entrypoint.sh
+RUN chmod +x /ros_entrypoint.sh; chown kinetic /ros_entrypoint.sh
+
+#USER $USERNAME
+
 RUN echo 'source ${ROS_ROOT}/setup.bash' >> /root/.bashrc
+#RUN echo 'source ${ROS_ROOT}/setup.bash' >> /home/${USERNAME}/.bashrc
+
+#USER root
+
+RUN echo ${HOME}
+RUN echo ${NAME}
+
+WORKDIR ${HOME}/${NAME}
 ENTRYPOINT ["/ros_entrypoint.sh"]
 #CMD ["bash"]
 #CMD ["source devel/setup.bash && /bin/bash"]
-CMD ["su", "-", "ros", "-c", "source devel/setup.bash && /bin/bash"]
-WORKDIR /
+CMD ["su", "-", "kinetic", "-c", "source /opt/ros/kinetic/setup.bash && /bin/bash"]
 

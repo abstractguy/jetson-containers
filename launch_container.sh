@@ -21,5 +21,4 @@ docker run --runtime=nvidia --rm -it \
            --env=TERM=xterm-256color \
            --env=QT_X11_NO_MITSHM=1 \
            --net=host \
-           jetson/ros:
-
+           jetson/ros:kinetic
