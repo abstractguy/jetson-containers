@@ -133,8 +133,8 @@ RUN chmod +x /install_uarm.sh
 ##RUN su-exec sam:1001 /bin/bash -c "bash /install_uarm.sh"
 #RUN /bin/bash /install_uarm.sh
 
-RUN source /opt/ros/melodic/setup.bash && \
-    mkdir -p $BOBBLE_WS/src && \
+RUN source /opt/ros/kinetic/setup.bash && \
+    mkdir -p ${HOME}/src && \
     cd ${HOME}/src && \
     catkin_init_workspace && \
     /bin/bash /install_uarm.sh && \
