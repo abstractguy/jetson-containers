@@ -267,28 +267,11 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-#RUN pip install --upgrade 'pip<21.0'
-#RUN pip install pycurl
-#RUN pip install Cython
-#RUN pip install matplotlib==2.0.2
-#RUN pip install numpy
-#RUN pip install scipy
-#RUN pip install jupyter
-#RUN pip install seaborn
-#RUN pip install pandas
-#RUN pip install bokeh
-#RUN pip install rosbag_pandas
-#RUN cd /opt/ros/kinetic && \
-#    rosdep init && \
-#    rosdep update && \
-#    pip cache purge
-
 RUN pip install --upgrade 'pip<21.0' && \
-    pip install bokeh && \
-    pip install rosbag_pandas && \
-    pip cache purge && \
-    cd /opt/ros/kinetic && \
-    rosdep init && \
+    pip install bokeh rosbag_pandas tornado && \
+    pip cache purge
+
+RUN cd /opt/ros/kinetic && \
     rosdep update
 
 #ENV HOME /root
