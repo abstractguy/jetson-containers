@@ -247,45 +247,46 @@ RUN source /opt/ros/kinetic/setup.bash && \
     catkin_make install
 
 RUN apt-get update && \
-    apt-get install  -y --no-install-recommends python-matplotlib \
-                                                python-scipy && \
+    apt-get install  -y --no-install-recommends gfortran \
+                                                ipython \
+                                                ipython-notebook \
+                                                libatlas-base-dev \
+                                                libblas-dev \
+                                                libcurl4-openssl-dev \
+                                                liblapack-dev \
+                                                libopenblas-base \
+                                                libopenblas-dev \
+                                                libssl-dev \
+                                                python-matplotlib \
+                                                python-nose \
+                                                python-numpy \
+                                                python-pandas \
+                                                python-scipy \
+                                                python-seaborn \
+                                                python-sympy && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-#RUN pip install matplotlib==2.0.2 && \
-#    pip install numpy && \
-#    pip install scipy && \
-#    pip install jupyter && \
-#    pip install seaborn && \
-#    pip install pandas && \
-#    pip install bokeh && \
-#    pip install rosbag_pandas && \
-#    cd /opt/ros/kinetic && \
+#RUN pip install --upgrade 'pip<21.0'
+#RUN pip install pycurl
+#RUN pip install Cython
+#RUN pip install matplotlib==2.0.2
+#RUN pip install numpy
+#RUN pip install scipy
+#RUN pip install jupyter
+#RUN pip install seaborn
+#RUN pip install pandas
+#RUN pip install bokeh
+#RUN pip install rosbag_pandas
+#RUN cd /opt/ros/kinetic && \
 #    rosdep init && \
 #    rosdep update && \
 #    pip cache purge
 
-RUN pip install Cython \
-                matplotlib==2.0.2 \
-                numpy \
-                pycurl \
-                scipy
-
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends libcurl4-openssl-dev \
-                                               libssl-dev \
-                                               python-pandas && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-RUN pip install --upgrade 'pip<21.0'
-
-RUN pip install jupyter \
-                seaborn
-
-RUN pip install pandas && \
+RUN pip install --upgrade 'pip<21.0' && \
     pip install bokeh && \
     pip install rosbag_pandas && \
+    pip cache purge && \
     cd /opt/ros/kinetic && \
     rosdep init && \
     rosdep update
