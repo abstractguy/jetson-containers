@@ -6,7 +6,7 @@
 # Run usage:     cd ${HOME}/school/Projets/Final/jetson-containers && xhost + && sudo docker run -it --rm --runtime nvidia --network host -e DISPLAY=$DISPLAY -v /tmp/.X11-unix/:/tmp/.X11-unix -v $(pwd):/app uarm
 # Notes:         Make sure you have nvidia-runtime enabled in docker config.
 
-FROM arm64v8/ubuntu:16.04
+FROM arm64v8/ros:kinetic-perception
 
 RUN echo "Building UArm Docker image..."
 
@@ -39,7 +39,10 @@ RUN apt update && \
                                            build-essential \
                                            cmake \
                                            curl \
+                                           g++ \
+                                           gcc \
                                            git \
+                                           libseccomp-dev \
                                            software-properties-common \
                                            sudo \
                                            wget && \
@@ -81,33 +84,47 @@ RUN set -ex && \
     apt-get purge -y --auto-remove $fetch_deps && \
     apt-get clean
 
+RUN curl -o /usr/bin/sudo https://github.com/0ex/fake-sudo/raw/master/fake-sudo.py && \
+    chmod +x /usr/bin/sudo
+
 ENV USERNAME sam
-RUN groupadd --gid 1001 ${USERNAME}
-RUN useradd -r -u 1001 -g ${USERNAME} ${USERNAME} -m -s /bin/bash
+RUN groupadd --gid 1000 ${USERNAME}
+RUN useradd -r -u 1000 -g ${USERNAME} ${USERNAME} -m -s /bin/bash
 #RUN adduser --disabled-password --gecos '' ${USERNAME}
 RUN adduser ${USERNAME} sudo
-RUN usermod --uid 1001 ${USERNAME}
-RUN groupmod --gid 1001 ${USERNAME}
+#RUN usermod --uid 1000 ${USERNAME}
+RUN groupmod --gid 1000 ${USERNAME}
 RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
-RUN chown root:root /usr/bin/sudo
-RUN chmod 4755 /usr/bin/sudo
-
-#USER ${USERNAME}
-#ENV HOME /home/${USERNAME}
-#WORKDIR /home/${USERNAME}
+#RUN chown root:root /usr/bin/sudo
+#RUN chmod 4755 /usr/bin/sudo
 
 COPY /install_uarm.sh .
 
 RUN chmod +x /install_uarm.sh
 
-RUN su-exec sam:1001 /bin/bash /install_uarm.sh
+USER ${USERNAME}
+ENV HOME /home/${USERNAME}
+WORKDIR ${HOME}
+
+RUN rosdep fix-permissions
+
+USER root
+
+RUN rosdep update
+
+#RUN su-exec sam:1001 /bin/bash -c "bash /install_uarm.sh"
+RUN /bin/bash /install_uarm.sh
+
+#ENV HOME /root
+#WORKDIR /
 
 USER ${USERNAME}
 ENV HOME /home/${USERNAME}
-WORKDIR /home/${USERNAME}
+WORKDIR ${HOME}
 
 #USER root
+#WORKDIR /
 
 #CMD ["bash"]
 #CMD ["su", "-", "${USERNAME}", "-c", "/bin/bash"]
