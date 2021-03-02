@@ -273,14 +273,17 @@ RUN pip install Cython \
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends libcurl4-openssl-dev \
-                                               libssl-dev && \
+                                               libssl-dev \
+                                               python-pandas && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-RUN pip install --upgrade 'pip<21.0' && \
-    pip install jupyter && \
-    pip install seaborn && \
-    pip install pandas && \
+RUN pip install --upgrade 'pip<21.0'
+
+RUN pip install jupyter \
+                seaborn
+
+RUN pip install pandas && \
     pip install bokeh && \
     pip install rosbag_pandas && \
     cd /opt/ros/kinetic && \
