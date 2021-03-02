@@ -8,7 +8,11 @@
 
 FROM arm64v8/ros:kinetic-perception
 
-RUN echo "Building UArm Docker image..."
+ENV NVIDIA_VISIBLE_DEVICES \
+    ${NVIDIA_VISIBLE_DEVICES:-all}
+
+ENV NVIDIA_DRIVER_CAPABILITIES \
+    ${NVIDIA_DRIVER_CAPABILITIES:+$NVIDIA_DRIVER_CAPABILITIES,}graphics
 
 # Ensure apt-get won't prompt for selecting options
 ENV DEBIAN_FRONTEND=noninteractive
@@ -34,6 +38,15 @@ ENV QT_X11_NO_MITSHM 1
 #    apt-get clean && \
 #    rm -rf /var/lib/apt/lists/*
 
+
+RUN apt-get update && apt-get install -y apt-utils build-essential psmisc
+
+RUN rm /bin/sh && ln -s /bin/bash /bin/sh
+
+RUN apt-get update && apt-get install -q -y python-catkin-tools
+
+RUN apt-get update && apt-get install -q -y ros-kinetic-hector-gazebo-plugins
+
 RUN apt update && \
     apt install -y --no-install-recommends bash-completion \
                                            build-essential \
@@ -42,6 +55,10 @@ RUN apt update && \
                                            g++ \
                                            gcc \
                                            git \
+                                           python-rosdep \
+                                           python-rosinstall \
+                                           python-rosinstall-generator \
+                                           python-wstool \
                                            libseccomp-dev \
                                            software-properties-common \
                                            sudo \
@@ -81,53 +98,81 @@ RUN set -ex && \
     chown root:root /usr/local/bin/su-exec && \
     chmod 0755 /usr/local/bin/su-exec && \
     rm /usr/local/bin/su-exec.c && \
-    apt-get purge -y --auto-remove $fetch_deps && \
-    apt-get clean
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 RUN curl -o /usr/bin/sudo https://github.com/0ex/fake-sudo/raw/master/fake-sudo.py && \
     chmod +x /usr/bin/sudo
 
-ENV USERNAME sam
-RUN groupadd --gid 1000 ${USERNAME}
-RUN useradd -r -u 1000 -g ${USERNAME} ${USERNAME} -m -s /bin/bash
-#RUN adduser --disabled-password --gecos '' ${USERNAME}
-RUN adduser ${USERNAME} sudo
-#RUN usermod --uid 1000 ${USERNAME}
-RUN groupmod --gid 1000 ${USERNAME}
-RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
-
-#RUN chown root:root /usr/bin/sudo
-#RUN chmod 4755 /usr/bin/sudo
+#ENV USERNAME sam
+#RUN groupadd --gid 1000 ${USERNAME}
+#RUN useradd -r -u 1000 -g ${USERNAME} ${USERNAME} -m -s /bin/bash
+##RUN adduser --disabled-password --gecos '' ${USERNAME}
+#RUN adduser ${USERNAME} sudo
+##RUN usermod --uid 1000 ${USERNAME}
+#RUN groupmod --gid 1000 ${USERNAME}
+#RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+#
+##RUN chown root:root /usr/bin/sudo
+##RUN chmod 4755 /usr/bin/sudo
 
 COPY /install_uarm.sh .
 
 RUN chmod +x /install_uarm.sh
 
-USER ${USERNAME}
-ENV HOME /home/${USERNAME}
-WORKDIR ${HOME}
+#USER ${USERNAME}
+#ENV HOME /home/${USERNAME}
+#WORKDIR ${HOME}
 
-RUN rosdep fix-permissions
-
-USER root
-
-RUN rosdep update
-
-#RUN su-exec sam:1001 /bin/bash -c "bash /install_uarm.sh"
-RUN /bin/bash /install_uarm.sh
-
-#ENV HOME /root
-#WORKDIR /
-
-USER ${USERNAME}
-ENV HOME /home/${USERNAME}
-WORKDIR ${HOME}
+#RUN rosdep fix-permissions
 
 #USER root
-#WORKDIR /
 
-#CMD ["bash"]
+#RUN rosdep update
+
+##RUN su-exec sam:1001 /bin/bash -c "bash /install_uarm.sh"
+#RUN /bin/bash /install_uarm.sh
+
+RUN source /opt/ros/melodic/setup.bash && \
+    mkdir -p $BOBBLE_WS/src && \
+    cd ${HOME}/src && \
+    catkin_init_workspace && \
+    /bin/bash /install_uarm.sh && \
+    cd $HOME && \
+    catkin_make && \
+    catkin_make install
+
+RUN apt-get update && \
+    apt-get install -y python-pip && \
+    pip install matplotlib==2.0.2 && \
+    pip install numpy && \
+    pip install scipy && \
+    pip install jupyter && \
+    pip install seaborn && \
+    pip install pandas && \
+    pip install bokeh && \
+    pip install rosbag_pandas && \
+    cd /opt/ros/kinetic && \
+    rosdep init && \
+    rosdep update && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+#ENV HOME /root
+##WORKDIR /
+
+#USER ${USERNAME}
+#ENV HOME /home/${USERNAME}
+#WORKDIR ${HOME}
+
+EXPOSE 11345
+COPY ./packages/ros_entrypoint.sh /ros_entrypoint.sh
+RUN echo 'source /opt/ros/kinetic/setup.bash' >> /root/.bashrc
+ENTRYPOINT ["/ros_entrypoint.sh"]
 #CMD ["su", "-", "${USERNAME}", "-c", "/bin/bash"]
-CMD ["su", "-", "sam", "-c", "/bin/bash"]
-#WORKDIR /
+#CMD ["su", "-", "sam", "-c", "/bin/bash"]
+CMD ["bash"]
+#USER root
+WORKDIR /
+
 
