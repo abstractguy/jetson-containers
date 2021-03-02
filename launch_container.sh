@@ -14,6 +14,7 @@ sudo xhost +si:localuser:root
 
 docker run --privileged \
            --runtime=nvidia --rm -it \
+           --volume=$HOME/school/Projets/Final/jetson-containers:/app \
            --volume=$XSOCK:$XSOCK:rw \
            --volume=$XAUTH:$XAUTH:rw \
            --volume=$HOME:$HOME \
@@ -28,8 +29,4 @@ docker run --privileged \
            --env=QT_X11_NO_MITSHM=1 \
            --net=host \
            jetson/ros:kinetic
-
-
-
-
 

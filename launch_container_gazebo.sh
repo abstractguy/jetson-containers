@@ -41,7 +41,13 @@ gzclient --verbose &
 GZCLIENT_PID=$!
 
 # After exit.
-sudo kill $GZCLIENT_PID && \
-docker stop gazebo-kinetic && \
-docker rm gazebo-kinetic
+function cleanup {
+    sudo kill $GZCLIENT_PID && \
+    docker stop gazebo-kinetic && \
+    docker rm gazebo-kinetic
+}
+
+trap SIGKILL cleanup
+trap SIGTERM cleanup
+trap SIGINT cleanup
 

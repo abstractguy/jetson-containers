@@ -223,7 +223,12 @@ RUN service udev reload && \
 
 # Install IMU.
 RUN apt-get update && \
-    apt-get install  -y --no-install-recommends ros-kinetic-phidgets-imu ros-kinetic-imu-filter* && \
+    apt-get install  -y --no-install-recommends ros-kinetic-imu-filter* \
+                                                ros-kinetic-navigation \
+                                                ros-kinetic-phidgets-imu \
+                                                ros-kinetic-heron-viz \
+                                                ros-kinetic-sound-play \
+                                                ros-kinetic-tf-conversions && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
