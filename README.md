@@ -2,7 +2,10 @@
 
 ## Modified by Samuel Duclos.
 
+#### Refer to INSTALL_DOCKER.md for prerequisites.
+
 #### Emulate on an x86_64 before trying out on ARM64:
+
 ```bash
 $ DOCKER_URL=''
 $ DOCKER_USER='arm64v8'

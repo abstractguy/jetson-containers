@@ -1,5 +1,5 @@
 # Overview of UArmForROS
-This repository is currently worked towards bootstrapping UArmForROS. This install is currently being tested on Ubuntu 16.04 LTS (on a x86_64 computer) while I'm making the uARM work. Then, I will be porting to Docker for portability on other Ubuntu versions. This will allow me to target a Jetson Nano while removing dependencies. This project is in an early development stage.
+This repository is currently worked towards bootstrapping UArmForROS. This install is currently being emulated on a x86_64 computer in Docker. The Docker container simulates an ARM64v8 architecture running Ubuntu 16.04 LTS. I still have to test it in simulation and with the real uARM. It should port on a Jetson Nano seemlessly. Then, I will be defining the OpenAI Gym environment. This project is in an early development stage.
 
 ## Prerequisites
 - Ubuntu 16.04 LTS, 18.04 LTS or 20.04 LTS
