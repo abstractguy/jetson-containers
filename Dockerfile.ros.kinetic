@@ -1,4 +1,4 @@
-# File:          yolo_inference/Dockerfile
+# File:          Dockerfile
 # By:            Samuel Duclos
 # For            Myself
 # Description:   This Dockerfile installs UArmForROS.
@@ -24,11 +24,6 @@ ENV QT_X11_NO_MITSHM 1
 #    apt install -y --no-install-recommends bash-completion \
 #                                           build-essential \
 #                                           cmake \
-#                                           libpython-dev \
-#                                           python-dev \
-#                                           python-pip \
-#                                           python-setuptools \
-#                                           python-wheel \
 #                                           software-properties-common \
 #                                           sudo \
 #                                           zip && \
@@ -43,21 +38,29 @@ RUN apt-get update && apt-get install -y apt-utils build-essential psmisc
 
 RUN rm /bin/sh && ln -s /bin/bash /bin/sh
 
-RUN apt-get update && apt-get install -q -y python-catkin-tools
+#RUN apt-get update && apt-get install -q -y python-catkin-tools
 
 RUN apt update && \
-    apt install -y --no-install-recommends bash-completion \
+    apt install -y --no-install-recommends apt-utils \
+                                           bash-completion \
                                            build-essential \
                                            cmake \
                                            curl \
                                            g++ \
                                            gcc \
                                            git \
+                                           libpython-dev \
+                                           libseccomp-dev \
+                                           psmisc \
+                                           python-catkin-tools \
+                                           python-dev \
+                                           python-pip \
                                            python-rosdep \
                                            python-rosinstall \
                                            python-rosinstall-generator \
+                                           python-setuptools \
+                                           python-wheel \
                                            python-wstool \
-                                           libseccomp-dev \
                                            ros-kinetic-hector-gazebo-plugins \
                                            ros-kinetic-kdl-conversions \
                                            software-properties-common \
@@ -130,23 +133,151 @@ RUN chmod +x /install_uarm.sh
 
 #RUN rosdep update
 
-##RUN su-exec sam:1001 /bin/bash -c "bash /install_uarm.sh"
-#RUN /bin/bash /install_uarm.sh
-
 RUN source /opt/ros/kinetic/setup.bash && \
     mkdir -p ${HOME}/src && \
     cd ${HOME}/src && \
-    catkin_init_workspace && \
-    /bin/bash /install_uarm.sh && \
+    catkin_init_workspace
+
+##RUN su-exec sam:1001 /bin/bash -c "bash /install_uarm.sh"
+#RUN /bin/bash /install_uarm.sh
+
+# Install ROS.
+RUN touch 10periodic && \
+    echo 'APT::Periodic::Update-Package-Lists "0";' >> 10periodic && \
+    echo 'APT::Periodic::Download-Upgradeable-Packages "0";' >> 10periodic && \
+    echo 'APT::Periodic::AutocleanInterval "0";' >> 10periodic
+
+RUN wget https://raw.githubusercontent.com/KTH-RAS/ras_install/kinetic-2018/scripts/install_basic.sh && \
+    sh ./install_basic.sh
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends initramfs-tools libdevmapper-dev udev && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+#RUN dpkg-reconfigure udev
+##RUN update-initramfs -u -k 2.6.31-14-generic
+#RUN update-initramfs -u -k 2.27.1-6ubuntu3.10
+##RUN dpkg --configure -a
+
+#COPY config/99-realsense-libusb.rules /etc/udev/rules.d
+#COPY scripts/patch-uvcvideo-ubuntu-mainline.sh /
+#
+## Install Realsense drivers.
+#RUN mkdir -p ~/Dev && \
+#    cd ~/Dev && \
+#    git clone https://github.com/KTH-RAS/librealsense-release.git && \
+#    cd librealsense-release && \
+#    git checkout -b rpm/ros-kinetic-librealsense-1.12.1-0_24 && \
+#    pwd
+#
+#RUN /bin/bash /sbin/udevadm control --reload-rules
+#RUN /sbin/udevadm trigger && \
+#    cp /scripts/patch-uvcvideo-ubuntu-mainline.sh /root/Dev/librealsense-release && \
+#    ls && \
+#    ./scripts/patch-uvcvideo-ubuntu-mainline.sh && \
+#    modprobe uvcvideo
+
+# Install phidget drivers.
+RUN wget https://raw.githubusercontent.com/KTH-RAS/ras_install/kinetic-2018/scripts/install_phidgets.sh && \
+    sh ./install_phidgets.sh
+
+# Create udev rule for arm.
+RUN touch ttyUSB.rules && \
+    echo 'KERNEL=="ttyUSB*", MODE="0666"' >> ttyUSB.rules && \
+    mv ttyUSB.rules /etc/udev/rules.d
+
+# Install pyuarm.
+RUN cd ~ && \
+    git clone https://github.com/KTH-RAS/pyuarm.git && \
+    cd ~/pyuarm && \
+    python setup.py install
+
+COPY config/ras.rosinstall /root/catkin_ws/src
+
+# Merge rosinstall files.
+RUN cd ~/catkin_ws/src && \
+    wstool merge ras.rosinstall && \
+    wstool update
+
+#RUN rosdep install --skip-keys=librealsense --from-paths -i ras_realsense/realsense_camera/src/ && \
+#    cd ~/catkin_ws && \
+#    source ~/.bashrc && \
+#    catkin_make && \
+#    source ~/catkin_ws/devel/setup.bash && \
+#    cd ~/catkin_ws/src/ras_rplidar/scripts && \
+#    mv rplidar.rules /etc/udev/rules.d && \
+#    service udev reload && \
+#    service udev restart
+
+#RUN rosdep install && \
+#    cd ~/catkin_ws && \
+#    source ~/.bashrc && \
+#    catkin_make && \
+#    source ~/catkin_ws/devel/setup.bash && \
+#    cd ~/catkin_ws/src/ras_rplidar/scripts && \
+#    mv rplidar.rules /etc/udev/rules.d
+
+RUN service udev reload && \
+    service udev restart
+
+# Install IMU.
+RUN apt-get update && \
+    apt-get install  -y --no-install-recommends ros-kinetic-phidgets-imu ros-kinetic-imu-filter* && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Add user to dialout group.
+RUN gpasswd -a root dialout && \
+    gpasswd -a root audio && \
+    gpasswd -a root video
+
+#RUN source /opt/ros/kinetic/setup.bash && \
+#    mkdir -p ${HOME}/src && \
+#    cd ${HOME}/src && \
+#    catkin_init_workspace && \
+#    /bin/bash /install_uarm.sh && \
+#    cd $HOME && \
+#    catkin_make && \
+#    catkin_make install
+
+RUN source /opt/ros/kinetic/setup.bash && \
     cd $HOME && \
     catkin_make && \
     catkin_make install
 
 RUN apt-get update && \
-    apt-get install -y python-pip && \
-    pip install matplotlib==2.0.2 && \
-    pip install numpy && \
-    pip install scipy && \
+    apt-get install  -y --no-install-recommends python-matplotlib \
+                                                python-scipy && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+#RUN pip install matplotlib==2.0.2 && \
+#    pip install numpy && \
+#    pip install scipy && \
+#    pip install jupyter && \
+#    pip install seaborn && \
+#    pip install pandas && \
+#    pip install bokeh && \
+#    pip install rosbag_pandas && \
+#    cd /opt/ros/kinetic && \
+#    rosdep init && \
+#    rosdep update && \
+#    pip cache purge
+
+RUN pip install Cython \
+                matplotlib==2.0.2 \
+                numpy \
+                pycurl \
+                scipy
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends libcurl4-openssl-dev \
+                                               libssl-dev && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN pip install --upgrade 'pip<21.0' && \
     pip install jupyter && \
     pip install seaborn && \
     pip install pandas && \
@@ -154,9 +285,7 @@ RUN apt-get update && \
     pip install rosbag_pandas && \
     cd /opt/ros/kinetic && \
     rosdep init && \
-    rosdep update && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+    rosdep update
 
 #ENV HOME /root
 ##WORKDIR /

@@ -20,6 +20,7 @@ docker run --privileged \
            --volume=/usr/lib/aarch64-linux-gnu/tegra:/usr/lib/aarch64-linux-gnu/tegra \
            --volume=/usr/lib/aarch64-linux-gnu/tegra-egl:/usr/lib/aarch64-linux-gnu/tegra-egl \
            --volume=/usr/local/cuda:/usr/local/cuda \
+           --volume=/dev:/dev \
            --env="XAUTHORITY=${XAUTH}" \
            --env="DISPLAY=${DISPLAY}" \
            --env=TERM=xterm-256color \
