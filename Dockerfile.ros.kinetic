@@ -45,8 +45,6 @@ RUN rm /bin/sh && ln -s /bin/bash /bin/sh
 
 RUN apt-get update && apt-get install -q -y python-catkin-tools
 
-RUN apt-get update && apt-get install -q -y ros-kinetic-hector-gazebo-plugins
-
 RUN apt update && \
     apt install -y --no-install-recommends bash-completion \
                                            build-essential \
@@ -60,6 +58,8 @@ RUN apt update && \
                                            python-rosinstall-generator \
                                            python-wstool \
                                            libseccomp-dev \
+                                           ros-kinetic-hector-gazebo-plugins \
+                                           ros-kinetic-kdl-conversions \
                                            software-properties-common \
                                            sudo \
                                            wget && \
