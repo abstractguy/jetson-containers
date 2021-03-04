@@ -1,6 +1,13 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -e
 
-# setup ros2 environment
+# Setup ROS environment.
 source "/opt/ros/$ROS_DISTRO/setup.bash"
+
+bash /sbin/udevadm control --reload-rules && \
+udevadm trigger && \
+service udev reload && \
+service udev restart
+
 exec "$@"
+

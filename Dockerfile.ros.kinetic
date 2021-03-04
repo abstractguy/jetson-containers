@@ -7,6 +7,7 @@
 # Notes:         Make sure you have nvidia-runtime enabled in docker config.
 
 FROM arm64v8/ros:kinetic-perception
+#FROM arm64v8/ubuntu:16.04
 
 ENV NVIDIA_VISIBLE_DEVICES \
     ${NVIDIA_VISIBLE_DEVICES:-all}
@@ -20,25 +21,16 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Set missing environment variable needed to run Qt applications.
 ENV QT_X11_NO_MITSHM 1
 
-#RUN apt update && \
-#    apt install -y --no-install-recommends bash-completion \
-#                                           build-essential \
-#                                           cmake \
-#                                           software-properties-common \
-#                                           sudo \
-#                                           zip && \
-#    pip install --upgrade pip && \
-#    pip install setuptools Cython wheel && \
-#    pip cache purge && \
-#    apt-get clean && \
-#    rm -rf /var/lib/apt/lists/*
-
-
-RUN apt-get update && apt-get install -y apt-utils build-essential psmisc
-
 RUN rm /bin/sh && ln -s /bin/bash /bin/sh
 
-#RUN apt-get update && apt-get install -q -y python-catkin-tools
+# Install ROS.
+RUN touch 10periodic && \
+    echo 'APT::Periodic::Update-Package-Lists "0";' >> 10periodic && \
+    echo 'APT::Periodic::Download-Upgradeable-Packages "0";' >> 10periodic && \
+    echo 'APT::Periodic::AutocleanInterval "0";' >> 10periodic
+
+#RUN sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" >> /etc/apt/sources.list.d/ros-latest.list' && \
+#           apt-key adv --keyserver hkp://pool.sks-keyservers.net --recv-key 0xB01FA116
 
 RUN apt update && \
     apt install -y --no-install-recommends apt-utils \
@@ -49,138 +41,99 @@ RUN apt update && \
                                            g++ \
                                            gcc \
                                            git \
+                                           gfortran \
+                                           initramfs-tools \
+                                           ipython \
+                                           ipython-notebook \
+                                           libatlas-base-dev \
+                                           libblas-dev \
+                                           libboost-random1.58-dev \
+                                           libcurl4-openssl-dev \
+                                           libdevmapper-dev \
+                                           libglu1 \
+                                           liblapack-dev \
+                                           libopenblas-base \
+                                           libopenblas-dev \
                                            libpython-dev \
                                            libseccomp-dev \
+                                           libssl-dev \
+                                           libusb-dev \
+                                           nano \
                                            psmisc \
                                            python-catkin-tools \
                                            python-dev \
+                                           python-matplotlib \
+                                           python-nose \
+                                           python-numpy \
+                                           python-pandas \
                                            python-pip \
+                                           python-scipy \
+                                           python-seaborn \
+                                           python-sympy \
                                            python-rosdep \
                                            python-rosinstall \
                                            python-rosinstall-generator \
                                            python-setuptools \
                                            python-wheel \
                                            python-wstool \
+                                           qtcreator \
+                                           ros-kinetic-camera-info-manager \
+                                           ros-kinetic-cmake-modules \
+                                           ros-kinetic-desktop-full \
                                            ros-kinetic-hector-gazebo-plugins \
+                                           ros-kinetic-imu-filter* \
                                            ros-kinetic-kdl-conversions \
+                                           ros-kinetic-kobuki-keyop \
+                                           ros-kinetic-kobuki-soft \
+                                           ros-kinetic-navigation \
+                                           ros-kinetic-phidgets-imu \
+                                           ros-kinetic-heron-viz \
+                                           ros-kinetic-rgbd-launch \
+                                           ros-kinetic-roscpp-tutorials \
+                                           ros-kinetic-rqt-graph \
+                                           ros-kinetic-rtt-ros \
+                                           ros-kinetic-rqt-gui \
+                                           ros-kinetic-rqt-plot \
+                                           ros-kinetic-sound-play \
+                                           ros-kinetic-tf-conversions \
                                            software-properties-common \
+                                           ssh \
                                            sudo \
+                                           udev \
                                            wget && \
+    pip install --upgrade 'pip<21.0' && \
+    pip install bokeh rosbag_pandas tornado wstool && \
+    pip cache purge && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Add new sudo user.
-#ENV USERNAME sam
-#ENV HOME /home/$USERNAME
-#COPY install_uarm.sh /
-#RUN chmod +x /install_uarm.sh
-# Replace 1000 with your user/group id.
-#RUN useradd -m $USERNAME && \
-#    echo "$USERNAME:$USERNAME" | chpasswd && \
-#    usermod --shell /bin/bash $USERNAME && \
-#    usermod -aG sudo $USERNAME && \
-#    mkdir -p /etc/sudoers.d && \
-#    echo "$USERNAME ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/$USERNAME && \
-#    chmod 0440 /etc/sudoers.d/$USERNAME && \
-#    usermod  --uid 1000 $USERNAME && \
-#    groupmod --gid 1000 $USERNAME && \
-#    gpasswd -a $USERNAME video
-#
-#USER $USERNAME
-#WORKDIR /home/$USERNAME
-#SHELL ["/bin/bash", "-c"]
-
-# Install latest su-exec
-RUN set -ex && \
-    curl -o /usr/local/bin/su-exec.c https://raw.githubusercontent.com/ncopa/su-exec/master/su-exec.c && \
-    fetch_deps='gcc libc-dev' && \
-    apt-get update && \
-    apt-get install -y --no-install-recommends $fetch_deps && \
-    rm -rf /var/lib/apt/lists/* && \
-    gcc -Wall /usr/local/bin/su-exec.c -o/usr/local/bin/su-exec && \
-    chown root:root /usr/local/bin/su-exec && \
-    chmod 0755 /usr/local/bin/su-exec && \
-    rm /usr/local/bin/su-exec.c && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+#                                           openjdk-7-jre \
+#                                           ros-kinetic-librealsense \
 
 RUN curl -o /usr/bin/sudo https://github.com/0ex/fake-sudo/raw/master/fake-sudo.py && \
     chmod +x /usr/bin/sudo
 
-#ENV USERNAME sam
-#RUN groupadd --gid 1000 ${USERNAME}
-#RUN useradd -r -u 1000 -g ${USERNAME} ${USERNAME} -m -s /bin/bash
-##RUN adduser --disabled-password --gecos '' ${USERNAME}
-#RUN adduser ${USERNAME} sudo
-##RUN usermod --uid 1000 ${USERNAME}
-#RUN groupmod --gid 1000 ${USERNAME}
-#RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
-#
-##RUN chown root:root /usr/bin/sudo
-##RUN chmod 4755 /usr/bin/sudo
-
-COPY /install_uarm.sh .
-
-RUN chmod +x /install_uarm.sh
-
-#USER ${USERNAME}
-#ENV HOME /home/${USERNAME}
-#WORKDIR ${HOME}
-
-#RUN rosdep fix-permissions
-
-#USER root
-
-#RUN rosdep update
+RUN rosdep update -y
 
 RUN source /opt/ros/kinetic/setup.bash && \
-    mkdir -p ${HOME}/src && \
-    cd ${HOME}/src && \
-    catkin_init_workspace
+    mkdir -p ~/src && \
+    cd ~/src && \
+    catkin_init_workspace && \
+    wstool init
 
-##RUN su-exec sam:1001 /bin/bash -c "bash /install_uarm.sh"
-#RUN /bin/bash /install_uarm.sh
+RUN source /opt/ros/kinetic/setup.bash && \
+    cd ~ && \
+    catkin_make && \
+    echo "source ~/devel/setup.bash" >> ~/.bashrc && \
+    source ~/devel/setup.bash && \
+    source ~/.bashrc
 
-# Install ROS.
-RUN touch 10periodic && \
-    echo 'APT::Periodic::Update-Package-Lists "0";' >> 10periodic && \
-    echo 'APT::Periodic::Download-Upgradeable-Packages "0";' >> 10periodic && \
-    echo 'APT::Periodic::AutocleanInterval "0";' >> 10periodic
+COPY config/ras_basic.rosinstall /root/src
+COPY config/ras.rosinstall /root/src
 
-RUN wget https://raw.githubusercontent.com/KTH-RAS/ras_install/kinetic-2018/scripts/install_basic.sh && \
-    sh ./install_basic.sh
-
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends initramfs-tools libdevmapper-dev udev && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-#RUN dpkg-reconfigure udev
-##RUN update-initramfs -u -k 2.6.31-14-generic
-#RUN update-initramfs -u -k 2.27.1-6ubuntu3.10
-##RUN dpkg --configure -a
-
-#COPY config/99-realsense-libusb.rules /etc/udev/rules.d
-#COPY scripts/patch-uvcvideo-ubuntu-mainline.sh /
-#
-## Install Realsense drivers.
-#RUN mkdir -p ~/Dev && \
-#    cd ~/Dev && \
-#    git clone https://github.com/KTH-RAS/librealsense-release.git && \
-#    cd librealsense-release && \
-#    git checkout -b rpm/ros-kinetic-librealsense-1.12.1-0_24 && \
-#    pwd
-#
-#RUN /bin/bash /sbin/udevadm control --reload-rules
-#RUN /sbin/udevadm trigger && \
-#    cp /scripts/patch-uvcvideo-ubuntu-mainline.sh /root/Dev/librealsense-release && \
-#    ls && \
-#    ./scripts/patch-uvcvideo-ubuntu-mainline.sh && \
-#    modprobe uvcvideo
-
-# Install phidget drivers.
-RUN wget https://raw.githubusercontent.com/KTH-RAS/ras_install/kinetic-2018/scripts/install_phidgets.sh && \
-    sh ./install_phidgets.sh
+RUN cd ~/src && \
+    wstool merge ras_basic.rosinstall && \
+    wstool update
 
 # Create udev rule for arm.
 RUN touch ttyUSB.rules && \
@@ -193,107 +146,29 @@ RUN cd ~ && \
     cd ~/pyuarm && \
     python setup.py install
 
-COPY config/ras.rosinstall /root/catkin_ws/src
-
 # Merge rosinstall files.
-RUN cd ~/catkin_ws/src && \
+RUN cd ~/src && \
     wstool merge ras.rosinstall && \
     wstool update
-
-#RUN rosdep install --skip-keys=librealsense --from-paths -i ras_realsense/realsense_camera/src/ && \
-#    cd ~/catkin_ws && \
-#    source ~/.bashrc && \
-#    catkin_make && \
-#    source ~/catkin_ws/devel/setup.bash && \
-#    cd ~/catkin_ws/src/ras_rplidar/scripts && \
-#    mv rplidar.rules /etc/udev/rules.d && \
-#    service udev reload && \
-#    service udev restart
-
-#RUN rosdep install && \
-#    cd ~/catkin_ws && \
-#    source ~/.bashrc && \
-#    catkin_make && \
-#    source ~/catkin_ws/devel/setup.bash && \
-#    cd ~/catkin_ws/src/ras_rplidar/scripts && \
-#    mv rplidar.rules /etc/udev/rules.d
-
-RUN service udev reload && \
-    service udev restart
-
-# Install IMU.
-RUN apt-get update && \
-    apt-get install  -y --no-install-recommends ros-kinetic-imu-filter* \
-                                                ros-kinetic-navigation \
-                                                ros-kinetic-phidgets-imu \
-                                                ros-kinetic-heron-viz \
-                                                ros-kinetic-sound-play \
-                                                ros-kinetic-tf-conversions && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
 
 # Add user to dialout group.
 RUN gpasswd -a root dialout && \
     gpasswd -a root audio && \
-    gpasswd -a root video
-
-#RUN source /opt/ros/kinetic/setup.bash && \
-#    mkdir -p ${HOME}/src && \
-#    cd ${HOME}/src && \
-#    catkin_init_workspace && \
-#    /bin/bash /install_uarm.sh && \
-#    cd $HOME && \
-#    catkin_make && \
-#    catkin_make install
+    gpasswd -a root video && \
+    gpasswd -a root input
 
 RUN source /opt/ros/kinetic/setup.bash && \
     cd $HOME && \
     catkin_make && \
     catkin_make install
 
-RUN apt-get update && \
-    apt-get install  -y --no-install-recommends gfortran \
-                                                ipython \
-                                                ipython-notebook \
-                                                libatlas-base-dev \
-                                                libblas-dev \
-                                                libcurl4-openssl-dev \
-                                                liblapack-dev \
-                                                libopenblas-base \
-                                                libopenblas-dev \
-                                                libssl-dev \
-                                                python-matplotlib \
-                                                python-nose \
-                                                python-numpy \
-                                                python-pandas \
-                                                python-scipy \
-                                                python-seaborn \
-                                                python-sympy && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-RUN pip install --upgrade 'pip<21.0' && \
-    pip install bokeh rosbag_pandas tornado && \
-    pip cache purge
-
 RUN cd /opt/ros/kinetic && \
     rosdep update
-
-#ENV HOME /root
-##WORKDIR /
-
-#USER ${USERNAME}
-#ENV HOME /home/${USERNAME}
-#WORKDIR ${HOME}
 
 EXPOSE 11345
 COPY ./packages/ros_entrypoint.sh /ros_entrypoint.sh
 RUN echo 'source /opt/ros/kinetic/setup.bash' >> /root/.bashrc
 ENTRYPOINT ["/ros_entrypoint.sh"]
-#CMD ["su", "-", "${USERNAME}", "-c", "/bin/bash"]
-#CMD ["su", "-", "sam", "-c", "/bin/bash"]
 CMD ["bash"]
-#USER root
 WORKDIR /
-
 
