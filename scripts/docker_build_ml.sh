@@ -3,11 +3,17 @@
 set -e
 source scripts/docker_base.sh
 
-CONTAINERS=${1:-"all"}
+CONTAINERS=${1:-'all'}
+#L4T_VERSION=${2:-'32.4'}
+L4T_VERSION=${2:-'r32.4.4'}
 
-#
-# PyTorch 
-#
+#BASE_IMAGE="registry.me:5000/l4t-base:$L4T_VERSION"
+#BASE_DEVEL="registry.me:5000/nvidia-l4t-base:$L4T_VERSION"
+
+BASE_IMAGE="nvcr.io/nvidia/l4t-base:${L4T_VERSION}"
+BASE_DEVEL="nvcr.io/nvidian/nvidia-l4t-base:${L4T_VERSION}"
+
+# PyTorch.
 build_pytorch()
 {
 	local pytorch_url=$1
@@ -64,23 +70,23 @@ if [[ "$CONTAINERS" == "pytorch" || "$CONTAINERS" == "all" ]]; then
 	# PyTorch v1.6.0
 	build_pytorch "https://nvidia.box.com/shared/static/9eptse6jyly1ggt9axbja2yrmj6pbarc.whl" \
 				  "torch-1.6.0-cp36-cp36m-linux_aarch64.whl" \
-				  "l4t-pytorch:r$L4T_VERSION-pth1.6-py3" \
+				  "l4t-pytorch:$L4T_VERSION-pth1.6-py3" \
 				  "v0.7.0" \
 				  "pillow" \
 				  "v0.6.0"
+				  #"l4t-pytorch:r$L4T_VERSION-pth1.6-py3" \
 				  
 	# PyTorch v1.7.0
 	build_pytorch "https://nvidia.box.com/shared/static/cs3xn3td6sfgtene6jdvsxlr366m2dhq.whl" \
 				  "torch-1.7.0-cp36-cp36m-linux_aarch64.whl" \
-				  "l4t-pytorch:r$L4T_VERSION-pth1.7-py3" \
+				  "l4t-pytorch:$L4T_VERSION-pth1.7-py3" \
 				  "v0.8.1" \
 				  "pillow" \
 				  "v0.7.0"
+				  #"l4t-pytorch:r$L4T_VERSION-pth1.7-py3" \
 fi
-
-#			  
-# TensorFlow
-#
+		  
+# TensorFlow.
 build_tensorflow()
 {
 	local tensorflow_url=$1
@@ -110,9 +116,7 @@ if [[ "$CONTAINERS" == "tensorflow" || "$CONTAINERS" == "all" ]]; then
 				  "l4t-tensorflow:r$L4T_VERSION-tf2.3-py3"
 fi
 
-#
-# Machine Learning
-#
+# Machine Learning.
 if [[ "$CONTAINERS" == "all" ]]; then
 
 	# alternate source:  http://repo.download.nvidia.com/jetson/jetson-ota-public.asc

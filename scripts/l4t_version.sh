@@ -21,29 +21,34 @@
 # DEALINGS IN THE SOFTWARE.
 #
 
-L4T_VERSION_STRING=$(head -n 1 /etc/nv_tegra_release)
+L4T_VERSION_STRING="/etc/nv_tegra_release"
+if [ -f "${L4T_VERSION_STRING}" ]; then
+	L4T_VERSION_STRING=$(head -n 1 ${L4T_VERSION_STRING})
+	if [ -z "$L4T_VERSION_STRING" ]; then
+		echo "reading L4T version from \"dpkg-query --show nvidia-l4t-core\""
 
-if [ -z "$L4T_VERSION_STRING" ]; then
-	echo "reading L4T version from \"dpkg-query --show nvidia-l4t-core\""
+		L4T_VERSION_STRING=$(dpkg-query --showformat='${Version}' --show nvidia-l4t-core)
+		L4T_VERSION_ARRAY=(${L4T_VERSION_STRING//./ })	
 
-	L4T_VERSION_STRING=$(dpkg-query --showformat='${Version}' --show nvidia-l4t-core)
-	L4T_VERSION_ARRAY=(${L4T_VERSION_STRING//./ })	
+		#echo ${L4T_VERSION_ARRAY[@]}
+		#echo ${#L4T_VERSION_ARRAY[@]}
 
-	#echo ${L4T_VERSION_ARRAY[@]}
-	#echo ${#L4T_VERSION_ARRAY[@]}
-
-	L4T_RELEASE=${L4T_VERSION_ARRAY[0]}
-	L4T_REVISION=${L4T_VERSION_ARRAY[1]}
+		L4T_RELEASE=${L4T_VERSION_ARRAY[0]}
+		L4T_REVISION=${L4T_VERSION_ARRAY[1]}
+	else
+		echo "reading L4T version from /etc/nv_tegra_release"
+		L4T_RELEASE=$(echo $L4T_VERSION_STRING | cut -f 2 -d ' ' | grep -Po '(?<=R)[^;]+')
+		L4T_REVISION=$(echo $L4T_VERSION_STRING | cut -f 2 -d ',' | grep -Po '(?<=REVISION: )[^;]+')
+	fi
 else
-	echo "reading L4T version from /etc/nv_tegra_release"
-
-	L4T_RELEASE=$(echo $L4T_VERSION_STRING | cut -f 2 -d ' ' | grep -Po '(?<=R)[^;]+')
-	L4T_REVISION=$(echo $L4T_VERSION_STRING | cut -f 2 -d ',' | grep -Po '(?<=REVISION: )[^;]+')
+	#L4T_VERSION_STRING="r32.4.3"
+	L4T_VERSION_STRING="r32.5.0"
+	L4T_RELEASE="32"
+	L4T_REVISION="5.0"
 fi
 
 L4T_REVISION_MAJOR=${L4T_REVISION:0:1}
 L4T_REVISION_MINOR=${L4T_REVISION:2:1}
-
 L4T_VERSION="$L4T_RELEASE.$L4T_REVISION"
-
 echo "L4T BSP Version:  L4T R$L4T_VERSION"
+

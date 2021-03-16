@@ -3,6 +3,7 @@
 #   http://wiki.ros.org/noetic/Installation/Source
 #
 ARG BASE_IMAGE=nvcr.io/nvidia/l4t-base:r32.4.4
+#ARG BASE_IMAGE=registry.me:5000/l4t-base:r32.4.4
 FROM ${BASE_IMAGE}
 
 ARG ROS_PKG=ros_base

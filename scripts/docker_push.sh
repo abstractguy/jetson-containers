@@ -3,6 +3,7 @@
 source scripts/l4t_version.sh
 
 NGC_GROUP="nvcr.io/ea-linux4tegra"
+#NGC_GROUP="registry.me:5000/ea-linux4tegra"
 CONTAINERS=${1:-"all"}
 
 push_retag() 

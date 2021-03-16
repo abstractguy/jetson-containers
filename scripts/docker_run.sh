@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 CONTAINER_IMAGE="nvcr.io/nvidian/nvidia-l4t-base:r32.4"
+#CONTAINER_IMAGE=registry.me:5000/nvidia-l4t-base:r32.4.4"
 
 USER_VOLUME=""
 USER_COMMAND=""
