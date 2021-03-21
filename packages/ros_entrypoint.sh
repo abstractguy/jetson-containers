@@ -4,7 +4,7 @@ set -e
 # Setup ROS environment.
 source "/opt/ros/$ROS_DISTRO/setup.bash"
 
-bash /sbin/udevadm control --reload-rules && \
+/sbin/udevadm control --reload-rules && \
 udevadm trigger && \
 service udev reload && \
 service udev restart
