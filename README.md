@@ -1,10 +1,10 @@
-# Machine Learning Containers for Jetson and JetPack
+## Machine Learning Containers for Jetson and JetPack for uARM control.
 
-## Modified by Samuel Duclos.
+#### Somewhat modified by Samuel Duclos.
 
 #### Refer to INSTALL_DOCKER.md for prerequisites.
 
-#### Emulate on an x86_64 before trying out on ARM64:
+##### Emulate on an x86_64 before trying out on ARM64:
 
 ```bash
 DOCKER_URL=''
@@ -14,29 +14,37 @@ DOCKER_IMAGE='ubuntu'
 DOCKER_TAG='16.04'
 ```
 
+##### Install QEMU the Docker way and verify.
 ```bash
 uname -m
 sudo apt-get install qemu binfmt-support qemu-user-static
 docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
 docker pull ${DOCKER_USER}/${DOCKER_IMAGE}:${DOCKER_TAG}
 docker run -it --rm --privileged --network=host --runtime nvidia -e DISPLAY=$DISPLAY -v /tmp/.X11-unix/:/tmp/.X11-unix -v $(pwd):/app ${DOCKER_USER}/${DOCKER_IMAGE}:${DOCKER_TAG} uname -m
-exit
 ```
 
+##### Build and run.
 ```bash
 docker build -f Dockerfile.ros.kinetic -t jetson/ros:kinetic .
 sudo chmod +x launch_container.sh
 ./launch_container.sh
+```
+
+##### Party!
+```bash
 roscore &
 ```
 
+##### Modify this comment later.
 ```bash
 uarm-miniterm
 firmware force
 rosrun uarm kth_uarm_core.py
 ```
 
-### See UArmForROS README.md for the rest.
+#### See jetson-containers/UArmForROS/README.md for the rest.
+
+#### The rest of this README.md is from the original jetson-containers.
 
 ###############################################################################
 
