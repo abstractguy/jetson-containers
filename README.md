@@ -25,9 +25,9 @@ docker run -it --rm --privileged --network=host --runtime nvidia -e DISPLAY=$DIS
 
 ##### Build and run.
 ```bash
-docker build -f Dockerfile.ros.kinetic -t jetson/ros:kinetic .
+sudo docker build -f Dockerfile.ros.kinetic -t jetson/ros:kinetic .
 sudo chmod +x launch_container.sh
-./launch_container.sh
+sudo ./launch_container.sh
 ```
 
 ##### Party!
@@ -38,7 +38,15 @@ roscore &
 ##### Modify this comment later.
 ```bash
 uarm-miniterm
+```
+
+##### Modify this comment later.
+```bash
 firmware force
+```
+
+##### Modify this comment later.
+```bash
 rosrun uarm kth_uarm_core.py
 ```
 
